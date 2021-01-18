@@ -25,11 +25,11 @@ from __future__ import print_function
 
 import tensorflow as tf  # pylint: disable=g-bad-import-order
 
-from official_transformer import attention_layer
-from official_transformer import beam_search
-from official_transformer import embedding_layer
-from official_transformer import ffn_layer
-from official_transformer import model_utils
+from ..official_transformer import attention_layer
+from ..official_transformer import beam_search
+from ..official_transformer import embedding_layer
+from ..official_transformer import ffn_layer
+from ..official_transformer import model_utils
 
 EOS_ID = 1
 _NEG_INF = -1e9
@@ -206,6 +206,7 @@ class Transformer(object):
 
   def predict(self, encoder_outputs, encoder_decoder_attention_bias):
     """Return predicted sequence."""
+
     batch_size = tf.shape(encoder_outputs)[0]
     input_length = tf.shape(encoder_outputs)[1]
     max_decode_length = input_length + self.params["extra_decode_length"]
@@ -241,7 +242,8 @@ class Transformer(object):
     top_decoded_ids = decoded_ids[:, 0, 1:]
     top_scores = scores[:, 0]
 
-    return {"outputs": top_decoded_ids, "scores": top_scores}
+    return {"outputs": top_decoded_ids, "scores": top_scores,
+            "beam" : decoded_ids[:, :, 1:]}
 
 
 class LayerNormalization(tf.layers.Layer):

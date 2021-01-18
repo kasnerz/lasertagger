@@ -24,10 +24,17 @@ from absl import app
 from absl import flags
 from absl import logging
 
-import bert_example
-import predict_utils
-import tagging_converter
-import utils
+
+try:
+  import bert_example
+  import predict_utils
+  import tagging_converter
+  import utils
+except ImportError:
+  from . import bert_example
+  from . import predict_utils
+  from . import tagging_converter
+  from . import utils
 
 import tensorflow as tf
 
@@ -38,7 +45,7 @@ flags.DEFINE_string(
     'Path to the input file containing examples for which to compute '
     'predictions.')
 flags.DEFINE_enum(
-    'input_format', None, ['wikisplit', 'discofuse'],
+    'input_format', None, ['wikisplit', 'discofuse', 'fuse'],
     'Format which indicates how to parse the input_file.')
 flags.DEFINE_string(
     'output_file', None,
@@ -75,6 +82,7 @@ def main(argv):
   builder = bert_example.BertExampleBuilder(label_map, FLAGS.vocab_file,
                                             FLAGS.max_seq_length,
                                             FLAGS.do_lower_case, converter)
+
   predictor = predict_utils.LaserTaggerPredictor(
       tf.contrib.predictor.from_saved_model(FLAGS.saved_model), builder,
       label_map)
@@ -88,6 +96,11 @@ def main(argv):
           f'{i} examples processed, {num_predicted} converted to tf.Example.',
           100)
       prediction = predictor.predict(sources)
+
+      if not prediction:
+        print("Decoding error, skipping an example")
+        continue
+
       writer.write(f'{" ".join(sources)}\t{prediction}\t{target}\n')
       num_predicted += 1
   logging.info(f'{num_predicted} predictions saved to:\n{FLAGS.output_file}')

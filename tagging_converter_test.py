@@ -19,8 +19,12 @@ from __future__ import division
 from __future__ import print_function
 
 from absl.testing import parameterized
-import tagging
-import tagging_converter
+try:
+  import tagging
+  import tagging_converter
+except ImportError:
+  from . import tagging
+  from . import tagging_converter
 import tensorflow as tf
 
 

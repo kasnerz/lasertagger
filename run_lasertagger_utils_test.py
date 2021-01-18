@@ -20,7 +20,10 @@ from __future__ import print_function
 
 from absl.testing import parameterized
 
-import run_lasertagger_utils
+try:
+  import run_lasertagger_utils
+except ImportError:
+  from . import run_lasertagger_utils
 
 import tensorflow as tf
 

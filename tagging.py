@@ -28,8 +28,10 @@ from __future__ import print_function
 from enum import Enum
 from typing import Sequence, Text
 
-import utils
-
+# try:
+#   import utils
+# except ImportError:
+from . import utils
 
 class TagType(Enum):
   """Base tag which indicates the type of an edit operation."""

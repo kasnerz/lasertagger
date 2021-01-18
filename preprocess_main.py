@@ -30,46 +30,51 @@ from absl import app
 from absl import flags
 from absl import logging
 
-import bert_example
-import tagging_converter
-import utils
+# try:
+#   import bert_example
+#   import tagging_converter
+#   import utils
+# except ImportError:
+from . import bert_example
+from . import tagging_converter
+from . import utils
 
 import tensorflow as tf
 
-FLAGS = flags.FLAGS
+# FLAGS = flags.FLAGS
 
-flags.DEFINE_string(
-    'input_file', None,
-    'Path to the input file containing examples to be converted to '
-    'tf.Examples.')
-flags.DEFINE_enum(
-    'input_format', None, ['wikisplit', 'discofuse'],
-    'Format which indicates how to parse the input_file.')
-flags.DEFINE_string('output_tfrecord', None,
-                    'Path to the resulting TFRecord file.')
-flags.DEFINE_string(
-    'label_map_file', None,
-    'Path to the label map file. Either a JSON file ending with ".json", that '
-    'maps each possible tag to an ID, or a text file that has one tag per '
-    'line.')
-flags.DEFINE_string('vocab_file', None, 'Path to the BERT vocabulary file.')
-flags.DEFINE_integer('max_seq_length', 128, 'Maximum sequence length.')
-flags.DEFINE_bool(
-    'do_lower_case', False,
-    'Whether to lower case the input text. Should be True for uncased '
-    'models and False for cased models.')
-flags.DEFINE_bool('enable_swap_tag', True, 'Whether to enable the SWAP tag.')
-flags.DEFINE_bool(
-    'output_arbitrary_targets_for_infeasible_examples', False,
-    'Set this to True when preprocessing the development set. Determines '
-    'whether to output a TF example also for sources that can not be converted '
-    'to target via the available tagging operations. In these cases, the '
-    'target ids will correspond to the tag sequence KEEP-DELETE-KEEP-DELETE... '
-    'which should be very unlikely to be predicted by chance. This will be '
-    'useful for getting more accurate eval scores during training.')
+# flags.DEFINE_string(
+#     'input_file', None,
+#     'Path to the input file containing examples to be converted to '
+#     'tf.Examples.')
+# flags.DEFINE_enum(
+#     'input_format', None, ['wikisplit', 'discofuse', 'fuse'],
+#     'Format which indicates how to parse the input_file.')
+# flags.DEFINE_string('output_tfrecord', None,
+#                     'Path to the resulting TFRecord file.')
+# flags.DEFINE_string(
+#     'label_map_file', None,
+#     'Path to the label map file. Either a JSON file ending with ".json", that '
+#     'maps each possible tag to an ID, or a text file that has one tag per '
+#     'line.')
+# flags.DEFINE_string('vocab_file', None, 'Path to the BERT vocabulary file.')
+# flags.DEFINE_integer('max_seq_length', 128, 'Maximum sequence length.')
+# flags.DEFINE_bool(
+#     'do_lower_case', False,
+#     'Whether to lower case the input text. Should be True for uncased '
+#     'models and False for cased models.')
+# flags.DEFINE_bool('enable_swap_tag', True, 'Whether to enable the SWAP tag.')
+# flags.DEFINE_bool(
+#     'output_arbitrary_targets_for_infeasible_examples', False,
+#     'Set this to True when preprocessing the development set. Determines '
+#     'whether to output a TF example also for sources that can not be converted '
+#     'to target via the available tagging operations. In these cases, the '
+#     'target ids will correspond to the tag sequence KEEP-DELETE-KEEP-DELETE... '
+#     'which should be very unlikely to be predicted by chance. This will be '
+#     'useful for getting more accurate eval scores during training.')
 
 
-def _write_example_count(count: int) -> Text:
+def _write_example_count(count: int, FLAGS) -> Text:
   """Saves the number of converted examples to a file.
 
   This count is used when determining the number of training steps.
@@ -86,14 +91,17 @@ def _write_example_count(count: int) -> Text:
   return count_fname
 
 
-def main(argv):
-  if len(argv) > 1:
-    raise app.UsageError('Too many command-line arguments.')
-  flags.mark_flag_as_required('input_file')
-  flags.mark_flag_as_required('input_format')
-  flags.mark_flag_as_required('output_tfrecord')
-  flags.mark_flag_as_required('label_map_file')
-  flags.mark_flag_as_required('vocab_file')
+def main(FLAGS):
+  from tensorflow.python.util import deprecation
+  deprecation._PRINT_DEPRECATION_WARNINGS = False
+
+  # if len(argv) > 1:
+  #   raise app.UsageError('Too many command-line arguments.')
+  # flags.mark_flag_as_required('input_file')
+  # flags.mark_flag_as_required('input_format')
+  # flags.mark_flag_as_required('output_tfrecord')
+  # flags.mark_flag_as_required('label_map_file')
+  # flags.mark_flag_as_required('vocab_file')
 
   label_map = utils.read_label_map(FLAGS.label_map_file)
   converter = tagging_converter.TaggingConverter(
@@ -103,8 +111,9 @@ def main(argv):
                                             FLAGS.max_seq_length,
                                             FLAGS.do_lower_case, converter)
 
+  data_fname = FLAGS.output_tfrecord + '.data.txt'
   num_converted = 0
-  with tf.io.TFRecordWriter(FLAGS.output_tfrecord) as writer:
+  with tf.io.TFRecordWriter(FLAGS.output_tfrecord) as writer, open(data_fname, "w") as data_file:
     for i, (sources, target) in enumerate(utils.yield_sources_and_targets(
         FLAGS.input_file, FLAGS.input_format)):
       logging.log_every_n(
@@ -116,10 +125,11 @@ def main(argv):
           FLAGS.output_arbitrary_targets_for_infeasible_examples)
       if example is None:
         continue
+      data_file.write(sources[0] + "\t" + target)
       writer.write(example.to_tf_example().SerializeToString())
       num_converted += 1
   logging.info(f'Done. {num_converted} examples converted to tf.Example.')
-  count_fname = _write_example_count(num_converted)
+  count_fname = _write_example_count(num_converted, FLAGS)
   logging.info(f'Wrote:\n{FLAGS.output_tfrecord}\n{count_fname}')
 
 

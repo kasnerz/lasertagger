@@ -24,11 +24,11 @@ from typing import Any, Mapping, Text
 
 import tensorflow as tf
 
-from official_transformer import attention_layer
-from official_transformer import embedding_layer
-from official_transformer import ffn_layer
-from official_transformer import model_utils
-from official_transformer import transformer
+from .official_transformer import attention_layer
+from .official_transformer import embedding_layer
+from .official_transformer import ffn_layer
+from .official_transformer import model_utils
+from .official_transformer import transformer
 
 
 class TransformerDecoder(transformer.Transformer):

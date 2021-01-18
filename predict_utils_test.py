@@ -23,9 +23,14 @@ import os
 from absl import flags
 from absl.testing import parameterized
 
-import bert_example
-import predict_utils
-import tagging_converter
+try:
+  import bert_example
+  import predict_utils
+  import tagging_converter
+except ImportError:
+  from . import bert_example
+  from . import predict_utils
+  from . import tagging_converter
 
 import numpy as np
 import tensorflow as tf

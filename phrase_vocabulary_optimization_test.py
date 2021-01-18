@@ -19,7 +19,10 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
-import phrase_vocabulary_optimization as vocab
+try:
+  import phrase_vocabulary_optimization as vocab
+except ImportError:
+  from . import phrase_vocabulary_optimization as vocab
 import tensorflow as tf
 
 

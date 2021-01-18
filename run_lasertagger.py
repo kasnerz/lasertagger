@@ -24,79 +24,85 @@ from __future__ import print_function
 from typing import Text
 from absl import flags
 
-import run_lasertagger_utils
-import utils
+# try:
+#   import run_lasertagger_utils
+#   import utils
+# except ImportError:
+from . import run_lasertagger_utils
+from . import utils
 
 import tensorflow as tf
 
-FLAGS = flags.FLAGS
+# FLAGS = flags.FLAGS
 
-## Required parameters
+# ## Required parameters
 
-flags.DEFINE_string("training_file", None,
-                    "Path to the TFRecord training file.")
-flags.DEFINE_string("eval_file", None, "Path to the the TFRecord dev file.")
-flags.DEFINE_string(
-    "label_map_file", None,
-    "Path to the label map file. Either a JSON file ending with '.json', that "
-    "maps each possible tag to an ID, or a text file that has one tag per "
-    "line.")
-flags.DEFINE_string(
-    "model_config_file", None,
-    "The config json file specifying the model architecture.")
-flags.DEFINE_string(
-    "output_dir", None,
-    "The output directory where the model checkpoints will be written. If "
-    "`init_checkpoint' is not provided when exporting, the latest checkpoint "
-    "from this directory will be exported.")
+# flags.DEFINE_string("training_file", None,
+#                     "Path to the TFRecord training file.")
+# flags.DEFINE_string("eval_file", None, "Path to the the TFRecord dev file.")
+# flags.DEFINE_string(
+#     "label_map_file", None,
+#     "Path to the label map file. Either a JSON file ending with '.json', that "
+#     "maps each possible tag to an ID, or a text file that has one tag per "
+#     "line.")
+# flags.DEFINE_string(
+#     "model_config_file", None,
+#     "The config json file specifying the model architecture.")
+# flags.DEFINE_string(
+#     "output_dir", None,
+#     "The output directory where the model checkpoints will be written. If "
+#     "`init_checkpoint' is not provided when exporting, the latest checkpoint "
+#     "from this directory will be exported.")
 
-## Other parameters
+# ## Other parameters
 
-flags.DEFINE_string(
-    "init_checkpoint", None,
-    "Initial checkpoint, usually from a pre-trained BERT model. In the case of "
-    "exporting, one can optionally provide path to a particular checkpoint to "
-    "be exported here.")
-flags.DEFINE_integer(
-    "max_seq_length", 128,
-    "The maximum total input sequence length after WordPiece tokenization. "
-    "Sequences longer than this will be truncated, and sequences shorter than "
-    "this will be padded.")
+# flags.DEFINE_string(
+#     "init_checkpoint", None,
+#     "Initial checkpoint, usually from a pre-trained BERT model. In the case of "
+#     "exporting, one can optionally provide path to a particular checkpoint to "
+#     "be exported here.")
+# flags.DEFINE_integer(
+#     "max_seq_length", 128,
+#     "The maximum total input sequence length after WordPiece tokenization. "
+#     "Sequences longer than this will be truncated, and sequences shorter than "
+#     "this will be padded.")
 
-flags.DEFINE_bool("do_train", False, "Whether to run training.")
-flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
-flags.DEFINE_bool("do_export", False, "Whether to export a trained model.")
-flags.DEFINE_bool("eval_all_checkpoints", False, "Run through all checkpoints.")
-flags.DEFINE_integer(
-    "eval_timeout", 600,
-    "The maximum amount of time (in seconds) for eval worker to wait between "
-    "checkpoints.")
+# flags.DEFINE_bool("do_train", False, "Whether to run training.")
+# flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
+# flags.DEFINE_bool("do_export", False, "Whether to export a trained model.")
+# flags.DEFINE_bool("eval_all_checkpoints", False, "Run through all checkpoints.")
+# flags.DEFINE_integer(
+#     "eval_timeout", 600,
+#     "The maximum amount of time (in seconds) for eval worker to wait between "
+#     "checkpoints.")
 
 
-flags.DEFINE_integer("train_batch_size", 32, "Total batch size for training.")
-flags.DEFINE_integer("eval_batch_size", 8, "Total batch size for eval.")
-flags.DEFINE_integer("predict_batch_size", 8, "Total batch size for predict.")
-flags.DEFINE_float("learning_rate", 3e-5, "The initial learning rate for Adam.")
-flags.DEFINE_float("num_train_epochs", 3.0,
-                   "Total number of training epochs to perform.")
-flags.DEFINE_float(
-    "warmup_proportion", 0.1,
-    "Proportion of training to perform linear learning rate warmup for. "
-    "E.g., 0.1 = 10% of training.")
-flags.DEFINE_integer("save_checkpoints_steps", 1000,
-                     "How often to save the model checkpoint.")
-flags.DEFINE_integer("iterations_per_loop", 1000,
-                     "How many steps to make in each estimator call.")
-flags.DEFINE_integer(
-    "num_train_examples", None,
-    "Number of training examples. This is used to determine the number of "
-    "training steps to respect the `num_train_epochs` flag.")
-flags.DEFINE_integer(
-    "num_eval_examples", None,
-    "Number of eval examples. This is used to determine the number of "
-    "eval steps to go through the eval file once.")
+# flags.DEFINE_integer("train_batch_size", 32, "Total batch size for training.")
+# flags.DEFINE_integer("eval_batch_size", 8, "Total batch size for eval.")
+# flags.DEFINE_integer("predict_batch_size", 8, "Total batch size for predict.")
+# flags.DEFINE_float("learning_rate", 3e-5, "The initial learning rate for Adam.")
+# # flags.DEFINE_float("num_train_epochs", 3.0,
+# #                    "Total number of training epochs to perform.")
+# flags.DEFINE_float("num_train_steps", 10000,
+#                    "Total number of training steps to perform.")
+# flags.DEFINE_float(
+#     "warmup_proportion", 0.1,
+#     "Proportion of training to perform linear learning rate warmup for. "
+#     "E.g., 0.1 = 10% of training.")
+# flags.DEFINE_integer("save_checkpoints_steps", 1000,
+#                      "How often to save the model checkpoint.")
+# flags.DEFINE_integer("iterations_per_loop", 1000,
+#                      "How many steps to make in each estimator call.")
+# # flags.DEFINE_integer(
+# #     "num_train_examples", None,
+# #     "Number of training examples. This is used to determine the number of "
+# #     "training steps to respect the `num_train_epochs` flag.")
+# flags.DEFINE_integer(
+#     "num_eval_examples", None,
+#     "Number of eval examples. This is used to determine the number of "
+#     "eval steps to go through the eval file once.")
 
-flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
+# flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
 flags.DEFINE_string(
     "tpu_name", None,
     "The Cloud TPU to use for training. This should be either the name "
@@ -114,7 +120,7 @@ flags.DEFINE_string(
     "metadata.")
 flags.DEFINE_string("master", None,
                     "Optional address of the master for the workers.")
-flags.DEFINE_string("export_path", None, "Path to save the exported model.")
+# flags.DEFINE_string("export_path", None, "Path to save the exported model.")
 
 
 def file_based_input_fn_builder(input_file, max_seq_length,
@@ -178,8 +184,12 @@ def _calculate_steps(num_examples, batch_size, num_epochs, warmup_proportion=0):
   return steps, warmup_steps
 
 
-def main(_):
+def main(FLAGS):
   tf.logging.set_verbosity(tf.logging.INFO)
+  from tensorflow.python.util import deprecation
+  deprecation._PRINT_DEPRECATION_WARNINGS = False
+
+  tf.config.threading.set_inter_op_parallelism_threads(8)
 
   if not (FLAGS.do_train or FLAGS.do_eval or FLAGS.do_export):
     raise ValueError("At least one of `do_train`, `do_eval` or `do_export` must"
@@ -215,12 +225,15 @@ def main(_):
           iterations_per_loop=FLAGS.iterations_per_loop,
           per_host_input_for_training=is_per_host,
           eval_training_input_configuration=tf.contrib.tpu.InputPipelineConfig
-          .SLICED))
+          .PER_HOST_V1))
 
   if FLAGS.do_train:
-    num_train_steps, num_warmup_steps = _calculate_steps(
-        FLAGS.num_train_examples, FLAGS.train_batch_size,
-        FLAGS.num_train_epochs, FLAGS.warmup_proportion)
+    # num_train_steps, num_warmup_steps = _calculate_steps(
+    #     FLAGS.num_train_examples, FLAGS.train_batch_size,
+    #     FLAGS.num_train_epochs, FLAGS.warmup_proportion)
+
+    num_train_steps = FLAGS.num_train_steps
+    num_warmup_steps = int(FLAGS.warmup_proportion * num_train_steps)
   else:
     num_train_steps, num_warmup_steps = None, None
 
@@ -246,6 +259,7 @@ def main(_):
       predict_batch_size=FLAGS.predict_batch_size)
 
   if FLAGS.do_train:
+    print("Running training...")
     train_input_fn = file_based_input_fn_builder(
         input_file=FLAGS.training_file,
         max_seq_length=FLAGS.max_seq_length,
@@ -254,6 +268,7 @@ def main(_):
     estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
   if FLAGS.do_eval:
+    print("Running evaluation...")
     # This tells the estimator to run through the entire set.
     eval_steps = None
     # However, if running eval on the TPU, you will need to specify the

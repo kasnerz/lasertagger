@@ -23,9 +23,10 @@ from __future__ import print_function
 from typing import Any, Mapping, Optional, Text
 from bert import modeling
 from bert import optimization
-import transformer_decoder
+from . import transformer_decoder
 import tensorflow as tf
-from official_transformer import model_params
+
+from .official_transformer import model_params
 
 
 class LaserTaggerConfig(modeling.BertConfig):
@@ -140,16 +141,20 @@ class ModelFnBuilder(object):
             tf.dtypes.cast(tf.reduce_sum(labels_mask, axis=1), tf.float32))
         loss = tf.reduce_mean(per_example_loss)
         pred = tf.cast(tf.argmax(logits, axis=-1), tf.int32)
+        beam = pred
       else:
         if self._config.use_t2t_decoder:
           pred = logits["outputs"]
+          beam = logits["beam"]
           # Transformer decoder reserves the first two IDs to the begin and the
           # end token so we shift the IDs back.
           pred -= 2
+          beam -= 2
         else:
           pred = tf.cast(tf.argmax(logits, axis=-1), tf.int32)
+          beam = pred
 
-      return (loss, per_example_loss, pred)
+      return (loss, per_example_loss, pred, beam)
 
   def build(self):
     """Returns `model_fn` closure for TPUEstimator."""
@@ -175,7 +180,7 @@ class ModelFnBuilder(object):
           labels = features["labels"]
         labels_mask = tf.cast(features["labels_mask"], tf.float32)
 
-      (total_loss, per_example_loss, predictions) = self._create_model(
+      (total_loss, per_example_loss, predictions, beam) = self._create_model(
           mode, input_ids, input_mask, segment_ids, labels, labels_mask)
 
       tvars = tf.trainable_variables()
@@ -241,7 +246,7 @@ class ModelFnBuilder(object):
             scaffold_fn=scaffold_fn)
       else:
         output_spec = tf.contrib.tpu.TPUEstimatorSpec(
-            mode=mode, predictions={"pred": predictions},
+            mode=mode, predictions={"pred": predictions, "beam" : beam},
             scaffold_fn=scaffold_fn)
       return output_spec
 

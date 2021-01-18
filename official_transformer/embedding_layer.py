@@ -21,7 +21,7 @@ from __future__ import print_function
 
 import tensorflow as tf  # pylint: disable=g-bad-import-order
 
-from official_transformer import tpu as tpu_utils
+from ..official_transformer import tpu as tpu_utils
 
 
 class EmbeddingSharedWeights(tf.layers.Layer):

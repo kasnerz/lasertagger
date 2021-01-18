@@ -20,7 +20,11 @@ from __future__ import print_function
 
 import os
 from absl import flags
-import score_lib
+try:
+  import score_lib
+except ImportError:
+  from . import score_lib
+
 import tensorflow as tf
 
 FLAGS = flags.FLAGS

@@ -25,8 +25,12 @@ from __future__ import division
 
 from __future__ import print_function
 
-import tagging
-import utils
+try:
+  import tagging
+  import utils
+except ImportError:
+  from . import tagging
+  from . import utils
 
 from typing import Iterable, Mapping, Sequence, Set, Text, Tuple
 
@@ -69,6 +73,7 @@ class TaggingConverter(object):
     """
     target_tokens = utils.get_token_list(target.lower())
     tags = self._compute_tags_fixed_order(task.source_tokens, target_tokens)
+
     # If conversion fails, try to obtain the target after swapping the source
     # order.
     if not tags and len(task.sources) == 2 and self._do_swap:

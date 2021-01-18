@@ -23,8 +23,14 @@ from __future__ import print_function
 import collections
 
 from bert import tokenization
-import tagging
-import tagging_converter
+
+# try:
+#   import tagging
+#   import tagging_converter
+# except ImportError:
+from . import tagging
+from . import tagging_converter
+
 import tensorflow as tf
 from typing import Mapping, MutableSequence, Optional, Sequence, Text
 

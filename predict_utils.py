@@ -23,44 +23,67 @@ from __future__ import print_function
 
 from typing import Mapping, Sequence, Text
 
-import bert_example
-import tagging
+try:
+    import bert_example
+    import tagging
+except ImportError:
+    from . import bert_example
+    from . import tagging
 
 
 class LaserTaggerPredictor(object):
-  """Class for computing and realizing predictions with LaserTagger."""
+    """Class for computing and realizing predictions with LaserTagger."""
+    def __init__(self, tf_predictor,
+                example_builder,
+                label_map):
+        """Initializes an instance of LaserTaggerPredictor.
 
-  def __init__(self, tf_predictor,
-               example_builder,
-               label_map):
-    """Initializes an instance of LaserTaggerPredictor.
+        Args:
+          tf_predictor: Loaded Tensorflow model.
+          example_builder: BERT example builder.
+          label_map: Mapping from tags to tag IDs.
+        """
+        self._predictor = tf_predictor
+        self._example_builder = example_builder
+        self._id_2_tag = {
+            tag_id: tagging.Tag(tag) for tag, tag_id in label_map.items()
+        }
 
-    Args:
-      tf_predictor: Loaded Tensorflow model.
-      example_builder: BERT example builder.
-      label_map: Mapping from tags to tag IDs.
-    """
-    self._predictor = tf_predictor
-    self._example_builder = example_builder
-    self._id_2_tag = {
-        tag_id: tagging.Tag(tag) for tag, tag_id in label_map.items()
-    }
+    def predict(self, sources):
+        """Returns realized prediction for given sources."""
+        example = self._example_builder.build_bert_example(sources)
+        if example is None:
+            raise ValueError("Example couldn't be built.")
 
-  def predict(self, sources):
-    """Returns realized prediction for given sources."""
-    example = self._example_builder.build_bert_example(sources)
-    if example is None:
-      raise ValueError("Example couldn't be built.")
+        # Predict tag IDs.
+        keys = ['input_ids', 'input_mask', 'segment_ids']
 
-    # Predict tag IDs.
-    keys = ['input_ids', 'input_mask', 'segment_ids']
-    out = self._predictor({key: [example.features[key]] for key in keys})
-    predicted_ids = out['pred'][0].tolist()
-    # Realize output.
-    example.features['labels'] = predicted_ids
-    # Mask out the begin and the end token.
-    example.features['labels_mask'] = [0] + [1] * (len(predicted_ids) - 2) + [0]
-    labels = [
-        self._id_2_tag[label_id] for label_id in example.get_token_labels()
-    ]
-    return example.editing_task.realize_output(labels)
+
+        out = self._predictor({key: [example.features[key]] for key in keys})
+
+        beam = []
+        for b in out['beam'][0]:
+            # predicted_ids = out['pred'][0].tolist()
+            predicted_ids = b.tolist()
+            # Realize output.
+            example.features['labels'] = predicted_ids
+            # Mask out the begin and the end token.
+            example.features['labels_mask'] = [0] + [1] * (len(predicted_ids) - 2) + [0]
+
+            labels = []
+
+            for label_id in example.get_token_labels():
+                if label_id not in self._id_2_tag:
+                    print("Decoding error, trying a hotfix (data may be corrupted)")
+                    ids = sorted(list(self._id_2_tag.keys()))
+                    min_id = ids[0]
+                    max_id = ids[-1]
+                    label_id = min(max(label_id, min_id), max_id)
+
+                label = self._id_2_tag[label_id]
+                labels.append(label)
+
+            sent = example.editing_task.realize_output(labels)
+            beam.append(sent)
+
+        return beam

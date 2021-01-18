@@ -21,8 +21,12 @@ from __future__ import print_function
 import os
 
 from absl import flags
-import bert_example
-import tagging_converter
+try:
+    import bert_example
+    import tagging_converter
+except ImportError:
+    from . import bert_example
+    from . import tagging_converter
 import tensorflow as tf
 
 FLAGS = flags.FLAGS

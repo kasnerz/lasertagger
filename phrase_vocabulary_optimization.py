@@ -34,40 +34,43 @@ from absl import app
 from absl import flags
 from absl import logging
 
-import utils
+# try:
+#   import utils
+# except ImportError:
+from . import utils
 
 import numpy as np
 import scipy.sparse
 import tensorflow as tf
 
-FLAGS = flags.FLAGS
+# FLAGS = flags.FLAGS
 
-flags.DEFINE_string(
-    'input_file', None,
-    'Path to the input file containing source-target pairs from which the '
-    'vocabulary is optimized (see `input_format` flag and utils.py for '
-    'documentation).')
-flags.DEFINE_enum(
-    'input_format', None, ['wikisplit', 'discofuse'],
-    'Format which indicates how to parse the `input_file`. See utils.py for '
-    'documentation on the different formats.')
-flags.DEFINE_integer(
-    'max_input_examples', 50000,
-    'At most this many examples from the `input_file` are used for optimizing '
-    'the vocabulary.')
-flags.DEFINE_string(
-    'output_file', None,
-    'Path to the resulting file with all possible tags. Coverage numbers will '
-    'be written to a separate file which has the same path but ".log" appended '
-    'to it.')
-flags.DEFINE_bool('enable_swap_tag', True, 'Whether to enable the SWAP tag.')
-flags.DEFINE_integer('vocabulary_size', 500,
-                     'Number of phrases to include in the vocabulary.')
-flags.DEFINE_integer(
-    'num_extra_statistics', 100,
-    'Number of extra phrases that are not included in the vocabulary but for '
-    'which we compute the coverage numbers. These numbers help determining '
-    'whether the vocabulary size should have been larger.')
+# flags.DEFINE_string(
+#     'input_file', None,
+#     'Path to the input file containing source-target pairs from which the '
+#     'vocabulary is optimized (see `input_format` flag and utils.py for '
+#     'documentation).')
+# flags.DEFINE_enum(
+#     'input_format', None, ['wikisplit', 'discofuse', 'fuse'],
+#     'Format which indicates how to parse the `input_file`. See utils.py for '
+#     'documentation on the different formats.')
+# flags.DEFINE_integer(
+#     'max_input_examples', 50000,
+#     'At most this many examples from the `input_file` are used for optimizing '
+#     'the vocabulary.')
+# flags.DEFINE_string(
+#     'output_file', None,
+#     'Path to the resulting file with all possible tags. Coverage numbers will '
+#     'be written to a separate file which has the same path but ".log" appended '
+#     'to it.')
+# flags.DEFINE_bool('enable_swap_tag', True, 'Whether to enable the SWAP tag.')
+# flags.DEFINE_integer('vocabulary_size', 500,
+#                      'Number of phrases to include in the vocabulary.')
+# flags.DEFINE_integer(
+#     'num_extra_statistics', 100,
+#     'Number of extra phrases that are not included in the vocabulary but for '
+#     'which we compute the coverage numbers. These numbers help determining '
+#     'whether the vocabulary size should have been larger.')
 
 
 def _compute_lcs(source, target):
@@ -186,19 +189,25 @@ def _added_token_counts(data_iterator, try_swapping, max_input_examples=10000):
   for sources, target in data_iterator:
     if num_examples >= max_input_examples:
       break
-    logging.log_every_n(logging.INFO, f'{num_examples} examples processed.',
-                        1000)
-    added_phrases = _get_added_phrases(' '.join(sources), target)
-    if try_swapping and len(sources) == 2:
-      added_phrases_swap = _get_added_phrases(' '.join(sources[::-1]), target)
-      # If we can align more and have to add less after swapping, we assume that
-      # the sources would be swapped during conversion.
-      if len(''.join(added_phrases_swap)) < len(''.join(added_phrases)):
-        added_phrases = added_phrases_swap
-    for phrase in added_phrases:
-      phrase_counter[phrase] += 1
-    all_added_phrases.append(added_phrases)
-    num_examples += 1
+
+    try:
+      logging.log_every_n(logging.INFO, f'{num_examples} examples processed.',
+                          10000)
+      added_phrases = _get_added_phrases(' '.join(sources), target)
+
+      if try_swapping and len(sources) == 2:
+        added_phrases_swap = _get_added_phrases(' '.join(sources[::-1]), target)
+        # If we can align more and have to add less after swapping, we assume that
+        # the sources would be swapped during conversion.
+        if len(''.join(added_phrases_swap)) < len(''.join(added_phrases)):
+          added_phrases = added_phrases_swap
+      for phrase in added_phrases:
+        phrase_counter[phrase] += 1
+      all_added_phrases.append(added_phrases)
+      num_examples += 1
+    except Exception as e:
+      print(f"Error: {e}")
+
   logging.info(f'{num_examples} examples processed.\n')
   return phrase_counter, all_added_phrases
 
@@ -246,12 +255,12 @@ def _count_covered_examples(matrix, vocabulary_size):
   return (matrix[:, vocabulary_size:].sum(axis=1) == 0).sum()
 
 
-def main(argv):
-  if len(argv) > 1:
-    raise app.UsageError('Too many command-line arguments.')
-  flags.mark_flag_as_required('input_file')
-  flags.mark_flag_as_required('input_format')
-  flags.mark_flag_as_required('output_file')
+def main(FLAGS):
+  # if len(argv) > 1:
+  #   raise app.UsageError('Too many command-line arguments.')
+  # flags.mark_flag_as_required('input_file')
+  # flags.mark_flag_as_required('input_format')
+  # flags.mark_flag_as_required('output_file')
 
   data_iterator = utils.yield_sources_and_targets(FLAGS.input_file,
                                                   FLAGS.input_format)

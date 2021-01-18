@@ -22,7 +22,12 @@ import json
 import os
 
 from absl import flags
-import utils
+
+try:
+  from . import utils
+except ImportError:
+  import utils
+
 import tensorflow as tf
 
 

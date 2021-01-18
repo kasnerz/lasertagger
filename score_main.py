@@ -32,7 +32,10 @@ from absl import app
 from absl import flags
 from absl import logging
 
-import score_lib
+try:
+  import score_lib
+except ImportError:
+  from . import score_lib
 
 FLAGS = flags.FLAGS
 

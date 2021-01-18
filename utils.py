@@ -56,6 +56,8 @@ def yield_sources_and_targets(
     yield_example_fn = _yield_wikisplit_examples
   elif input_format == 'discofuse':
     yield_example_fn = _yield_discofuse_examples
+  elif input_format == 'fuse':
+    yield_example_fn = _yield_fuse_examples
   else:
     raise ValueError('Unsupported input_format: {}'.format(input_format))
 
@@ -70,6 +72,16 @@ def _yield_wikisplit_examples(
   with tf.io.gfile.GFile(input_file) as f:
     for line in f:
       source, target = line.rstrip('\n').split('\t')
+      yield [source], target
+
+def _yield_fuse_examples(
+    input_file):
+  # The Fuse format expects a file with the extension ".in" to contain source sentences
+  # and a file with the extension ".ref" to contain target sentences.
+  with tf.io.gfile.GFile(f"{input_file}.in") as f_in, tf.io.gfile.GFile(f"{input_file}.ref") as f_ref:
+    for source, target in zip(f_in, f_ref):
+      source = source.rstrip('\n')
+      target = target.rstrip('\n')
       yield [source], target
 
 

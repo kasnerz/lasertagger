@@ -16,7 +16,11 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import tagging
+
+try:
+    import tagging
+except ImportError:
+    from . import tagging
 import tensorflow as tf
 
 
