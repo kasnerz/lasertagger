@@ -24,10 +24,6 @@ from __future__ import print_function
 from typing import Text
 from absl import flags
 
-# try:
-#   import run_lasertagger_utils
-#   import utils
-# except ImportError:
 from . import run_lasertagger_utils
 from . import utils
 
@@ -103,23 +99,23 @@ import tensorflow as tf
 #     "eval steps to go through the eval file once.")
 
 # flags.DEFINE_bool("use_tpu", False, "Whether to use TPU or GPU/CPU.")
-flags.DEFINE_string(
-    "tpu_name", None,
-    "The Cloud TPU to use for training. This should be either the name "
-    "used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 "
-    "url.")
-flags.DEFINE_string(
-    "tpu_zone", None,
-    "[Optional] GCE zone where the Cloud TPU is located in. If not "
-    "specified, we will attempt to automatically detect the GCE project from "
-    "metadata.")
-flags.DEFINE_string(
-    "gcp_project", None,
-    "[Optional] Project name for the Cloud TPU-enabled project. If not "
-    "specified, we will attempt to automatically detect the GCE project from "
-    "metadata.")
-flags.DEFINE_string("master", None,
-                    "Optional address of the master for the workers.")
+# flags.DEFINE_string(
+#     "tpu_name", None,
+#     "The Cloud TPU to use for training. This should be either the name "
+#     "used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 "
+#     "url.")
+# flags.DEFINE_string(
+#     "tpu_zone", None,
+#     "[Optional] GCE zone where the Cloud TPU is located in. If not "
+#     "specified, we will attempt to automatically detect the GCE project from "
+#     "metadata.")
+# flags.DEFINE_string(
+#     "gcp_project", None,
+#     "[Optional] Project name for the Cloud TPU-enabled project. If not "
+#     "specified, we will attempt to automatically detect the GCE project from "
+#     "metadata.")
+# flags.DEFINE_string("master", None,
+#                     "Optional address of the master for the workers.")
 # flags.DEFINE_string("export_path", None, "Path to save the exported model.")
 
 
